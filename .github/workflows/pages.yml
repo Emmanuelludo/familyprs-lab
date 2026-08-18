@@ -1,0 +1,78 @@
+name: Validate and deploy FamilyPRS Lab
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Verify deployed application assets
+        shell: bash
+        run: |
+          test -f index.html
+          test -f assets/app.js
+          test -f assets/styles.css
+          test -f assets/data_a.js
+          test -f assets/data_b.js
+          test -f assets/data_c.js
+          test -f assets/curves.js
+          test -f assets/xgb_trees.js
+          for f in assets/app_01.js assets/app_02.js assets/app_03.js assets/app_04.js assets/app_05.js assets/app_06.js; do
+            test -f "$f"
+            node --check "$f"
+          done
+          node --check assets/app.js
+          grep -q 'FamilyPRS Lab' index.html
+
+      - name: Verify research source parses
+        shell: bash
+        run: |
+          if [ -d scripts ]; then python3 -m compileall -q scripts; fi
+          if [ -d presentation ]; then
+            for f in presentation/*.js; do [ -e "$f" ] && node --check "$f"; done
+          fi
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Stage website only
+        shell: bash
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          cp -R assets _site/assets
+          touch _site/.nojekyll
+
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
