@@ -8,22 +8,53 @@ FamilyPRS Lab is a family-aware statistical-genetics demonstrator for prospectiv
 
 ```text
 .
-├── .github/workflows/       automatic GitHub Pages deployment
-├── analysis/R/              R/statistical-genetics analysis examples
-├── assets/                  deployed browser data, styles and model evaluators
-├── data/                    data provenance and schema documentation
-├── docs/                    methods and validation documentation
-├── models/                  model-artifact documentation
-├── presentation/            interview-presentation notes/source documentation
-├── results/                 model-result documentation
-├── scripts/                 simulation, training and public-PGS utilities
-├── tests/                   repository/model integrity tests
-└── index.html               application entry point
+├── .github/workflows/
+│   └── pages.yml             validate source/site and deploy GitHub Pages
+├── analysis/R/               R statistical-genetics extensions
+├── assets/                   tested browser application + deployed model payload
+├── data/public/              PGS/evidence provenance metadata
+├── docs/                     modelling, validation and interview documentation
+├── presentation/             reproducible PowerPoint source modules
+├── scripts/                  complete Python simulation/modelling pipeline
+├── tests/                    source and family-structure integrity tests
+├── index.html                deployed application entry point
+├── requirements.txt          Python research dependencies
+└── run_demo.sh               local static-site runner
 ```
+
+`results/`, `models/`, `data/synthetic/` and the final presentation binaries are **generated outputs**, not hand-maintained source. The Python pipeline recreates those directories when it is run. The static site committed under `index.html` + `assets/` is the tested deployment artifact used by GitHub Pages.
+
+## Reproducible analysis source
+
+The main entry point is:
+
+```bash
+python scripts/build_demo.py
+```
+
+The implementation is split into readable modules instead of one large script:
+
+- `familyprs_config.py` — predictors, public PGS metadata and evidence table;
+- `familyprs_evidence.py` — random-effects evidence synthesis and DGM parameter draws;
+- `familyprs_simulation.py` — pedigrees, Mendelian-style inheritance, ascertainment and 10-year event generation;
+- `familyprs_metrics.py` — calibration and family-bootstrap metrics;
+- `familyprs_candidates.py` — grouped model tuning and nested repeated family CV;
+- `familyprs_dependence.py` — mixed model, GEE and shared-gamma-frailty models;
+- `familyprs_fit.py` — development-OOF recalibration and final refit;
+- `familyprs_exports.py` — browser model export, sensitivity analysis and demo families;
+- `familyprs_pipeline.py` — end-to-end orchestration.
+
+The public-PGS download/schema check is separate:
+
+```bash
+python scripts/download_public_pgs.py
+```
+
+It downloads the official PGS Catalog scoring files and checks required scoring columns, genome build and weight type before genotype-level use.
 
 ## Scientific design
 
-The current demonstrator predicts **10-year incident IBD among initially unaffected members of ascertained IBD families**. Family membership is kept intact during development and final evaluation.
+The demonstrator predicts **10-year incident IBD among initially unaffected members of ascertained IBD families**. Family membership is kept intact during development and final evaluation.
 
 The genetic block uses three IBD PGS as correlated predictors:
 
@@ -31,11 +62,15 @@ The genetic block uses three IBD PGS as correlated predictors:
 - PGS003997: lassosum
 - PGS004038: LDpred2.CV
 
-The modelling comparison includes penalized logistic regression, a family random-intercept model, family-clustered GEE and boosted-tree learners. A shared-frailty survival model is used as a prospective time-to-event benchmark.
+The modelling comparison includes penalized logistic regression, a family random-intercept model, family-clustered GEE, a shared-frailty survival model and boosted-tree learners.
 
-A planned genotype-level extension replaces score-level familial genetic liability with variant/haplotype transmission, constructs a pedigree- or genotype-derived relationship matrix `K`, and fits a kinship-aware GLMM with
+A planned genotype-level extension replaces the coarse family random intercept with a pedigree- or genotype-derived relationship matrix `K` and a kinship-aware GLMM:
 
-`u ~ MVN(0, sigma_g^2 K)`.
+```text
+u ~ MVN(0, sigma_g^2 K)
+```
+
+The R scaffold for that step is `analysis/R/04_kinship_glmm.R`. It is deliberately not presented as a fitted GRM model without marker-level genotypes or a valid relationship matrix.
 
 ## Validation
 
@@ -43,9 +78,22 @@ The final test families are locked before model development. Hyperparameter sele
 
 Random individual splitting is deliberately not part of the scientific validation analysis.
 
+## Website
+
+For a local copy of the deployed site:
+
+```bash
+./run_demo.sh
+# open http://localhost:8000
+```
+
+The family editor supports example and custom nuclear families, live pedigree editing, three PGS inputs, clinical covariates and model switching. Validation ROC/calibration curves use explicit model labels, distinct colours, hover isolation and click/tap pinning.
+
 ## Automatic deployment
 
-`.github/workflows/pages.yml` deploys the application after every relevant push to `main`. The workflow stages only `index.html` and `assets/`, so research code and analysis files remain in the public repository without being copied into the Pages artifact.
+`.github/workflows/pages.yml` runs on every push to `main`. It syntax-checks the browser JavaScript, compiles the Python source, checks key statistical-genetics files, stages only `index.html` + `assets/`, and deploys that artifact with GitHub Pages.
+
+For this workflow to be the deployment authority, the repository's **Settings → Pages → Build and deployment → Source** must be set to **GitHub Actions**.
 
 ## Data note
 
