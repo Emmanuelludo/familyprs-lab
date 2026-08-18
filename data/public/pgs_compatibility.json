@@ -1,0 +1,13 @@
+{
+  "trait": "Inflammatory bowel disease",
+  "same_genome_build": "GRCh38",
+  "same_effect_weight_type": "beta",
+  "same_source_gwas": "GCST004131",
+  "score_ids": [
+    "PGS004105",
+    "PGS003997",
+    "PGS004038"
+  ],
+  "interpretation": "The scores are schema-compatible and target the same trait, but they are not statistically independent. They use different construction methods on substantially overlapping source evidence, so the analysis treats them as correlated predictors and learns a regularized stacked combination.",
+  "download_validation": "The repository download script validates PGS Catalog format metadata, build and required columns when the scoring files are downloaded in an internet-enabled environment."
+}
