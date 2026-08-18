@@ -1,0 +1,46 @@
+name: Expand project source archive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'source/FamilyPRS_Lab_Source_Code.zip'
+      - '.github/workflows/sync-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: source-sync
+  cancel-in-progress: true
+
+jobs:
+  expand-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Expand complete project source
+        shell: bash
+        run: |
+          rm -rf project
+          mkdir -p project
+          unzip -q source/FamilyPRS_Lab_Source_Code.zip -d project
+          rm -rf project/.pytest_cache project/tests/__pycache__
+
+      - name: Commit expanded source if changed
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project
+          if git diff --cached --quiet; then
+            echo 'Project source is already synchronized.'
+          else
+            git commit -m 'Sync complete FamilyPRS Lab project source'
+            git push origin HEAD:main
+          fi
