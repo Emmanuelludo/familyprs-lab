@@ -42,9 +42,13 @@ jobs:
       - name: Verify research source parses
         shell: bash
         run: |
-          if [ -d project/scripts ]; then python3 -m compileall -q project/scripts; fi
-          if [ -d project/presentation ]; then
-            for f in project/presentation/*.js; do [ -e "$f" ] && node --check "$f"; done
+          test -f scripts/build_demo.py
+          test -f scripts/download_public_pgs.py
+          test -f analysis/R/04_kinship_glmm.R
+          python3 -m compileall -q scripts
+          if [ -d tests ]; then python3 -m compileall -q tests; fi
+          if [ -d presentation ]; then
+            for f in presentation/*.js; do [ -e "$f" ] && node --check "$f"; done
           fi
 
   deploy:
