@@ -51,6 +51,24 @@ jobs:
             for f in presentation/*.js; do [ -e "$f" ] && node --check "$f"; done
           fi
 
+      - name: Install Chromium smoke-test dependency
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run browser interaction smoke test
+        shell: bash
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/familyprs-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node tests/browser_smoke.mjs
+
   deploy:
     needs: validate
     runs-on: ubuntu-latest
