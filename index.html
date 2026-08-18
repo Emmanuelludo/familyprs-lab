@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FamilyPRS Lab | Family-aware IBD risk modelling</title>
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark">FP</div><div><strong>FamilyPRS Lab</strong><span>Family-aware 10-year IBD risk modelling</span></div></div>
+  <div class="top-actions"><button id="resetBtn" class="ghost">Reset scenario</button></div>
+</header>
+<nav class="tabs" aria-label="Primary">
+  <button class="tab active" data-tab="tool">Family Risk Tool</button>
+  <button class="tab" data-tab="compare">Models</button>
+  <button class="tab" data-tab="validation">Validation</button>
+  <button class="tab" data-tab="simulation">Sensitivity</button>
+  <button class="tab" data-tab="methods">Methods & Data</button>
+</nav>
+<main>
+<section id="tool" class="tab-panel active">
+  <div class="hero-note">
+    <div><strong>Prediction target</strong><br>Ten-year incident IBD among relatives who are unaffected at baseline in an IBD-ascertained family cohort.</div>
+    <div class="status"><span class="dot"></span> Family-held-out modelling</div>
+  </div>
+  <div class="tool-grid">
+    <aside class="card family-card">
+      <div class="card-title family-title-row"><div><span class="eyebrow">FAMILY</span><h2>Choose or build a family</h2></div><div class="family-select-wrap"><select id="familySelect" aria-label="Family"></select><button id="newFamilyBtn" class="small-btn" type="button">New family</button></div></div>
+      <div id="pedigree" class="pedigree" aria-label="Interactive pedigree"></div>
+      <div class="pedigree-actions"><button id="addChildBtn" class="small-btn" type="button">+ Child</button><button id="removeMemberBtn" class="small-btn danger-btn" type="button">Remove selected child</button></div>
+      <div class="legend"><span><i class="legend-shape male"></i> Male</span><span><i class="legend-shape female"></i> Female</span><span><i class="legend-shape affected"></i> Baseline IBD</span></div>
+      <div class="divider"></div>
+      <div class="family-editor-title">Family composition and baseline status</div>
+      <p class="micro family-help">Edit sex, age and IBD status for any member. Select a relative in the pedigree to edit that person's PGS and clinical covariates.</p>
+      <div id="familyEditor" class="family-editor"></div>
+    </aside>
+
+    <section class="card input-card">
+      <span class="eyebrow">PREDICTORS</span><h2>Assessment inputs</h2>
+      <div id="selectedSummary" class="selected-summary"></div>
+      <h3 class="subhead">Polygenic scores</h3>
+      <div class="input-grid pgs-input-grid">
+        <label>P+T score <input id="pgsPt" type="range" min="1" max="99" step="1"><span id="pgsPtVal" class="value-pill"></span></label>
+        <label>lassosum score <input id="pgsLasso" type="range" min="1" max="99" step="1"><span id="pgsLassoVal" class="value-pill"></span></label>
+        <label>LDpred2 score <input id="pgsLd" type="range" min="1" max="99" step="1"><span id="pgsLdVal" class="value-pill"></span></label>
+      </div>
+      <h3 class="subhead">Clinical covariates</h3>
+      <div class="input-grid">
+        <label>Age <input id="age" type="range" min="18" max="80" step="1"><span id="ageVal" class="value-pill"></span></label>
+        <label>BMI <input id="bmi" type="range" min="16" max="42" step="0.1"><span id="bmiVal" class="value-pill"></span></label>
+        <label>Sex <select id="sex"><option value="F">Female</option><option value="M">Male</option></select></label>
+        <label class="check-row"><input id="smoker" type="checkbox"> Current smoker</label>
+        <label class="check-row"><input id="antibiotics" type="checkbox"> Antibiotics in past 12 months</label>
+      </div>
+      <div class="derived-box">
+        <div><span>First-degree relatives affected</span><strong id="fhCount">—</strong></div>
+        <div><span>Affected parent</span><strong id="fhParent">—</strong></div>
+        <div><span>Affected sibling</span><strong id="fhSibling">—</strong></div>
+        <div><span>Youngest affected FDR</span><strong id="fhOnset">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card result-card">
+      <span class="eyebrow">MODEL</span><h2>Ten-year risk estimate</h2>
+      <div class="model-toggle" role="group" aria-label="Model">
+        <button class="model-btn active" data-model="elastic">Elastic Net</button>
+        <button class="model-btn" data-model="mixed">Family mixed model</button>
+        <button class="model-btn" data-model="ml" id="mlModelButton">Gradient boosting</button>
+      </div>
+      <div id="notEligible" class="warning hidden"><strong>Prospective model not applicable.</strong><br>This relative is already affected at baseline.</div>
+      <div id="riskOutput">
+        <div class="risk-head"><div><span>Predicted 10-year probability</span><strong id="riskPct">—</strong></div><div class="risk-rank"><span>LDpred2 percentile</span><strong id="rankPct">—</strong></div></div>
+        <div class="risk-bar"><div id="riskFill"></div><span class="risk-tick low">0%</span><span class="risk-tick high">30%+</span></div>
+        <div class="callout" id="modelNote"></div>
+        <h3>Largest model contributions</h3>
+        <div id="drivers" class="drivers"></div>
+        <div class="compare-mini"><div><span>Elastic Net</span><strong id="elasticMini">—</strong></div><div><span>Mixed model</span><strong id="mixedMini">—</strong></div><div><span id="mlMiniLabel">ML</span><strong id="mlMini">—</strong></div></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section id="compare" class="tab-panel">
+  <div class="section-head"><span class="eyebrow">MODEL SET</span><h1>Statistical models and nonlinear alternatives</h1><p>Every model uses the same prediction horizon and family-held-out test set. The three PGS are entered jointly where appropriate.</p></div>
+  <div class="cards-2">
+    <div class="card model-card"><h2>Multi-PGS genetic block</h2><p>P+T, lassosum and LDpred2 provide correlated views of the same underlying genetic signal. A strongly regularized stack prevents redundant scores from dominating.</p><div id="pgsMetrics" class="metric-grid"></div><div id="pgsIncrement" class="source-box"></div></div>
+    <div class="card model-card"><h2>Elastic Net</h2><p>Three PGS, clinical covariates and explicit family-history variables. Shrinkage handles correlation among scores and related predictors.</p><div id="elasticMetrics" class="metric-grid"></div><h3>Largest standardized coefficients</h3><div id="elasticGlobal" class="drivers"></div></div>
+    <div class="card model-card"><h2>Family-aware estimation</h2><p>The random-intercept model estimates residual family clustering directly. GEE provides a population-average clustered analysis. A shared gamma-frailty model treats time to IBD onset explicitly.</p><div id="familyMetrics" class="metric-grid"></div></div>
+    <div class="card model-card"><h2>AutoML benchmark</h2><p>XGBoost, LightGBM and CatBoost are tuned with grouped development CV. They test whether nonlinear thresholds and interactions improve transportable prediction.</p><div id="automlTable" class="sensitivity-table"></div></div>
+  </div>
+</section>
+
+<section id="validation" class="tab-panel">
+  <div class="section-head"><span class="eyebrow">VALIDATION</span><h1>Families define the resampling unit</h1><p>Twenty percent of families are withheld before model development. Hyperparameters and calibration are learned only from the remaining families.</p></div>
+  <div class="card split-card"><h2>Development and final evaluation</h2><div id="validationFlow" class="pipeline"></div></div>
+  <div class="cards-2">
+    <div class="card"><h2>ROC curves on unseen families</h2><p class="chart-help">Hover a curve or model label to isolate it. Click or tap to keep it highlighted.</p><div id="rocLegend" class="chart-legend" aria-label="ROC curve model legend"></div><div class="chart-wrap"><svg id="rocChart" viewBox="0 0 560 360" aria-label="ROC curves for the evaluated models"></svg></div></div>
+    <div class="card"><h2>Calibration on unseen families</h2><p class="chart-help">The same model colours are used throughout. Click or tap a label to pin a curve.</p><div id="calLegend" class="chart-legend" aria-label="Calibration curve model legend"></div><div class="chart-wrap"><svg id="calChart" viewBox="0 0 560 360" aria-label="Calibration curves for the evaluated models"></svg></div></div>
+  </div>
+  <div class="card"><h2>Development CV and final test</h2><div id="validationTable" class="sensitivity-table"></div></div>
+</section>
+
+<section id="simulation" class="tab-panel">
+  <div class="section-head"><span class="eyebrow">SENSITIVITY</span><h1>Robustness to imperfect measurement</h1><p>The fitted models are perturbed with noisier PGS measurements, missing family history, exposure misclassification and outcome error.</p></div>
+  <div class="cards-2">
+    <div class="card"><h2>Model sensitivity</h2><div id="sensitivityTable" class="sensitivity-table"></div></div>
+    <div class="card"><h2>Data-generating parameters</h2><div id="dgmSummary" class="source-box"></div><p>Shared gamma frailty induces residual family dependence in the prospective outcome. The event process uses a ten-year exponential baseline hazard with evidence-informed relative effects.</p></div>
+  </div>
+</section>
+
+<section id="methods" class="tab-panel">
+  <div class="section-head"><span class="eyebrow">METHODS & DATA</span><h1>Evidence, simulation and modelling are kept separate</h1><p>The genetic evidence comes from public IBD PGS resources; the cohort generator supplies the family structure needed for method development.</p></div>
+  <div class="card methodology"><h2>Data provenance</h2><p><strong>One acknowledgement for the demonstrator:</strong> the PGS definitions and published performance summaries are public; participant-level pedigrees, clinical covariates and outcomes are simulated. No UKSH participant-level data are used.</p></div>
+  <div class="provenance-grid">
+    <div class="card provenance public"><h2>Public PGS set</h2><div id="pgsList"></div><div class="source-box" id="pgsCompatibility"></div></div>
+    <div class="card provenance synth"><h2>Data-generating model</h2><p>Founders receive latent genetic liability and method-specific heritable components. Offspring inherit both from their parents. Each PGS is a correlated measurement of latent genetic liability.</p>
+      <div class="equation-block"><div class="equation-label">Polygenic measurement model</div>
+        <math display="block" aria-label="PGS m equals rho m G plus square root of one minus rho m squared times H m">
+          <msub><mi>PGS</mi><mi>m</mi></msub><mo>=</mo><msub><mi>ρ</mi><mi>m</mi></msub><mi>G</mi><mo>+</mo>
+          <msqrt><mrow><mn>1</mn><mo>−</mo><msubsup><mi>ρ</mi><mi>m</mi><mn>2</mn></msubsup></mrow></msqrt><msub><mi>H</mi><mi>m</mi></msub>
+        </math>
+      </div>
+      <div class="equation-block"><div class="equation-label">Prospective family hazard</div>
+        <math display="block" aria-label="h if of t equals Z f h zero of t times exponential of X if transpose beta">
+          <msub><mi>h</mi><mrow><mi>i</mi><mi>f</mi></mrow></msub><mo>(</mo><mi>t</mi><mo>)</mo><mo>=</mo>
+          <msub><mi>Z</mi><mi>f</mi></msub><msub><mi>h</mi><mn>0</mn></msub><mo>(</mo><mi>t</mi><mo>)</mo>
+          <mi>exp</mi><mo>(</mo><msubsup><mi>X</mi><mrow><mi>i</mi><mi>f</mi></mrow><mi>T</mi></msubsup><mi>β</mi><mo>)</mo>
+        </math>
+      </div>
+      <p>Families are ascertained only after baseline IBD is generated. Unaffected relatives then enter the ten-year prediction cohort.</p></div>
+  </div>
+  <div class="card methodology"><h2>Analysis pipeline</h2><div class="pipeline">
+    <div>Public PGS evidence</div><span>→</span><div>Family generator</div><span>→</span><div>IBD ascertainment</div><span>→</span><div>10-year at-risk cohort</div><span>→</span><div>Grouped model development</div><span>→</span><div>Final unseen families</div><span>→</span><div>Sensitivity analysis</div>
+  </div></div>
+</section>
+</main>
+<footer><span>FamilyPRS Lab</span><span>Family-aware statistical genetics for IBD</span></footer>
+
+<script src="assets/data_a.js"></script>
+<script src="assets/data_b.js"></script>
+<script src="assets/data_c.js"></script>
+<script src="assets/curves.js"></script>
+<script src="assets/xgb_trees.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
