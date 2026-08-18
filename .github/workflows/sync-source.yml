@@ -1,10 +1,10 @@
-name: Expand project source archive
+name: Expand complete FamilyPRS source
 
 on:
   push:
     branches: [main]
     paths:
-      - 'source/FamilyPRS_Lab_Source_Code.zip'
+      - 'source/chunks/**'
       - '.github/workflows/sync-source.yml'
   workflow_dispatch:
 
@@ -24,12 +24,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Reconstruct and validate source archive
+        shell: bash
+        run: |
+          cat source/chunks/part_*.b64 > /tmp/familyprs-source.b64
+          base64 --decode /tmp/familyprs-source.b64 > /tmp/FamilyPRS_Lab_Source_Code.zip
+          unzip -tq /tmp/FamilyPRS_Lab_Source_Code.zip
+
       - name: Expand complete project source
         shell: bash
         run: |
           rm -rf project
           mkdir -p project
-          unzip -q source/FamilyPRS_Lab_Source_Code.zip -d project
+          unzip -q /tmp/FamilyPRS_Lab_Source_Code.zip -d project
           rm -rf project/.pytest_cache project/tests/__pycache__
 
       - name: Commit expanded source if changed
