@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths:
-      - 'source/chunks/**'
       - '.github/workflows/sync-source.yml'
   workflow_dispatch:
 
@@ -27,6 +26,7 @@ jobs:
       - name: Reconstruct and validate source archive
         shell: bash
         run: |
+          test -d source/chunks
           cat source/chunks/part_*.b64 > /tmp/familyprs-source.b64
           base64 --decode /tmp/familyprs-source.b64 > /tmp/familyprs-source.raw
           python3 - <<'PY'
@@ -45,23 +45,49 @@ jobs:
           PY
           unzip -tq /tmp/FamilyPRS_Lab_Source_Code.zip
 
-      - name: Expand complete project source
+      - name: Expand source into normal repository folders
         shell: bash
         run: |
-          rm -rf project
-          mkdir -p project
-          unzip -q /tmp/FamilyPRS_Lab_Source_Code.zip -d project
-          rm -rf project/.pytest_cache project/tests/__pycache__
+          rm -rf /tmp/familyprs-project
+          mkdir -p /tmp/familyprs-project
+          unzip -q /tmp/FamilyPRS_Lab_Source_Code.zip -d /tmp/familyprs-project
+          rm -rf /tmp/familyprs-project/.pytest_cache /tmp/familyprs-project/tests/__pycache__
 
-      - name: Commit expanded source if changed
+          rm -rf analysis scripts docs tests data/public
+          mkdir -p data presentation
+          cp -R /tmp/familyprs-project/analysis ./analysis
+          cp -R /tmp/familyprs-project/scripts ./scripts
+          cp -R /tmp/familyprs-project/docs ./docs
+          cp -R /tmp/familyprs-project/tests ./tests
+          cp -R /tmp/familyprs-project/data/public ./data/public
+          cp /tmp/familyprs-project/presentation/build_deck.js presentation/build_deck.js
+          cp /tmp/familyprs-project/presentation/build_deck_pre_qr.js presentation/build_deck_pre_qr.js
+          cp /tmp/familyprs-project/requirements.txt ./requirements.txt
+          cp /tmp/familyprs-project/run_demo.sh ./run_demo.sh
+          chmod +x run_demo.sh
+
+          # The deployed app remains the tested root index.html + assets/ tree.
+          # Temporary base64 archive material is removed after expansion.
+          rm -rf source
+
+      - name: Validate expanded source
+        shell: bash
+        run: |
+          python3 -m compileall -q scripts tests
+          for f in presentation/*.js; do node --check "$f"; done
+          test -f analysis/R/04_kinship_glmm.R
+          test -f docs/technical_spec.md
+          test -f data/public/pgs_catalog_metadata.json
+
+      - name: Commit clean source tree
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add project
+          git add -A
           if git diff --cached --quiet; then
-            echo 'Project source is already synchronized.'
+            echo 'Repository source is already synchronized.'
           else
-            git commit -m 'Sync complete FamilyPRS Lab project source'
+            git commit -m 'Expand FamilyPRS source into normal repository tree'
             git push origin HEAD:main
           fi
