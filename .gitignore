@@ -16,6 +16,15 @@ _site/
 tmp/
 *.log
 .DS_Store
+results/
+models/
+data/synthetic/
+presentation/*.pptx
+presentation/*.pdf
+
+# Keep public provenance metadata tracked
+!data/public/
+!data/public/**
 
 # Do not commit private/raw clinical or genotype data
 private/
