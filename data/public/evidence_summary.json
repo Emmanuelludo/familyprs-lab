@@ -1,0 +1,18 @@
+{
+  "pgs": {
+    "PGS004105": {"mean": 0.3543929310765906, "se_mean": 0.056474932205794866, "tau": 0.13283486674316966, "predictive_sd": 0.14434167724647226},
+    "PGS003997": {"mean": 0.5273889627132615, "se_mean": 0.07283290874558856, "tau": 0.17392452358675453, "predictive_sd": 0.18855867124378758},
+    "PGS004038": {"mean": 0.5555228426531799, "se_mean": 0.07838582494287627, "tau": 0.18777620649169155, "predictive_sd": 0.20348032159495333}
+  },
+  "latent_genetic_effect": {"mean": 0.5973363899496558, "predictive_sd": 0.06599553493532564},
+  "pgs_measurement_rho": {"PGS004105": 0.5932887013738762, "PGS003997": 0.8829011116461706, "PGS004038": 0.93},
+  "female": {"mean": 0.3364722366212129, "predictive_sd": 0.06548975684893217, "source": "family-history IBD study"},
+  "antibiotics": {"mean": 0.2468600779315258, "predictive_sd": 0.11643662033168163, "source": "family-history IBD study"},
+  "affected_sibling": {"mean": 0.3074846997479607, "predictive_sd": 0.07284724002108249, "source": "family-history IBD study"},
+  "fdr_2plus": {"mean": 0.9042181506398859, "predictive_sd": 0.14471095272217918, "source": "family-history IBD study"},
+  "fdr_3plus": {"mean": 1.8341801851120072, "predictive_sd": 0.7868817721624546, "source": "family-history IBD study"},
+  "smoking": {"mean": 0.09531017980432493, "predictive_sd": 0.12, "source": "weakly informative prior"},
+  "age_per_10y": {"mean": 0.0769610411361284, "predictive_sd": 0.07, "source": "weakly informative prior"},
+  "extreme_bmi": {"mean": 0.11332868530700327, "predictive_sd": 0.08, "source": "weakly informative prior"},
+  "high_genetic_multifdr_interaction": {"mean": 0.1823215567939546, "predictive_sd": 0.1, "source": "simulation stress-test prior"}
+}
