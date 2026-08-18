@@ -93,7 +93,7 @@ The family editor supports example and custom nuclear families, live pedigree ed
 
 `.github/workflows/pages.yml` runs on every push to `main`. It syntax-checks the browser JavaScript, compiles the Python source, checks key statistical-genetics files, stages only `index.html` + `assets/`, and deploys that artifact with GitHub Pages.
 
-For this workflow to be the deployment authority, the repository's **Settings → Pages → Build and deployment → Source** must be set to **GitHub Actions**.
+GitHub Pages is configured to use **GitHub Actions** as the deployment source, so pushes to `main` are validated and published through this workflow.
 
 ## Data note
 
