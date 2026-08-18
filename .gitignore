@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# Local/generated outputs
+_site/
+.tmp/
+tmp/
+*.log
+.DS_Store
+
+# Do not commit private/raw clinical or genotype data
+private/
+data/raw/
+data/private/
