@@ -42,14 +42,18 @@ jobs:
       - name: Verify research source parses
         shell: bash
         run: |
-          if [ -d scripts ]; then python3 -m compileall -q scripts; fi
-          if [ -d presentation ]; then
-            for f in presentation/*.js; do [ -e "$f" ] && node --check "$f"; done
+          if [ -d project/scripts ]; then python3 -m compileall -q project/scripts; fi
+          if [ -d project/presentation ]; then
+            for f in project/presentation/*.js; do [ -e "$f" ] && node --check "$f"; done
           fi
 
   deploy:
     needs: validate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -69,7 +73,7 @@ jobs:
           touch _site/.nojekyll
 
       - name: Upload website artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v4
         with:
           path: _site
 
