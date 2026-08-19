@@ -8,21 +8,19 @@ FamilyPRS Lab is a family-aware statistical-genetics demonstrator for prospectiv
 
 ```text
 .
-├── .github/workflows/
-│   └── pages.yml             validate source/site and deploy GitHub Pages
-├── analysis/R/               R statistical-genetics extensions
-├── assets/                   tested browser application + deployed model payload
-├── data/public/              PGS/evidence provenance metadata
-├── docs/                     modelling, validation and interview documentation
-├── presentation/             reproducible PowerPoint source modules
-├── scripts/                  complete Python simulation/modelling pipeline
-├── tests/                    source and family-structure integrity tests
-├── index.html                deployed application entry point
-├── requirements.txt          Python research dependencies
-└── run_demo.sh               local static-site runner
+├── .github/workflows/       validation and GitHub Pages deployment
+├── analysis/R/              R statistical-genetics extensions
+├── assets/                  browser application and deployed model payload
+├── data/public/             public PGS/evidence provenance metadata
+├── docs/                    technical and reproducibility documentation
+├── scripts/                 Python simulation/modelling pipeline
+├── tests/                   source and browser-interaction tests
+├── index.html               deployed application entry point
+├── requirements.txt         Python research dependencies
+└── run_demo.sh              local static-site runner
 ```
 
-`results/`, `models/`, `data/synthetic/` and the final presentation binaries are **generated outputs**, not hand-maintained source. The Python pipeline recreates those directories when it is run. The static site committed under `index.html` + `assets/` is the tested deployment artifact used by GitHub Pages.
+Generated outputs such as `results/`, fitted model objects and synthetic datasets are not hand-maintained source. They are recreated by the analysis pipeline. The static site committed under `index.html` + `assets/` is the deployment artifact used by GitHub Pages.
 
 ## Reproducible analysis source
 
@@ -32,7 +30,7 @@ The main entry point is:
 python scripts/build_demo.py
 ```
 
-The implementation is split into readable modules instead of one large script:
+The implementation is split into modules:
 
 - `familyprs_config.py` — predictors, public PGS metadata and evidence table;
 - `familyprs_evidence.py` — random-effects evidence synthesis and DGM parameter draws;
@@ -91,10 +89,8 @@ The family editor supports example and custom nuclear families, live pedigree ed
 
 ## Automatic deployment
 
-`.github/workflows/pages.yml` runs on every push to `main`. It syntax-checks the browser JavaScript, compiles the Python source, checks key statistical-genetics files, stages only `index.html` + `assets/`, and deploys that artifact with GitHub Pages.
-
-GitHub Pages is configured to use **GitHub Actions** as the deployment source, so pushes to `main` are validated and published through this workflow.
+`.github/workflows/pages.yml` runs on every push to `main`. It checks the browser JavaScript, compiles the Python source, runs an interaction smoke test in Chromium, stages only `index.html` + `assets/`, and deploys that artifact with GitHub Pages.
 
 ## Data note
 
-Participant-level records in the demonstrator are synthetic. Public PGS metadata and published summary estimates are used where documented. No UKSH patient-level data are included in this repository.
+Participant-level records in the demonstrator are synthetic. Public PGS metadata and published summary estimates are used where documented. No real patient-level clinical or genotype data are included in this repository.
