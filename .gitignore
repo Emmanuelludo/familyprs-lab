@@ -19,8 +19,14 @@ tmp/
 results/
 models/
 data/synthetic/
-presentation/*.pptx
-presentation/*.pdf
+
+# Private preparation / presentation material
+presentation/
+docs/interview_*.md
+docs/*interview*.md
+docs/course_alignment.md
+prep/
+study_notes/
 
 # Keep public provenance metadata tracked
 !data/public/
