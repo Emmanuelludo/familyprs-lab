@@ -18,11 +18,12 @@ def gee_oof_and_final(dev, test):
     return mod, fit, None, p, cv_summary, None
 
 def fit_shared_gamma_frailty(dev, test):
-    # Use the same observed predictor block as the logistic, GEE and mixed models
-    # so model comparisons reflect the survival/dependence formulation rather than
-    # differences in covariate availability.
+    # Use exactly the same observed predictor block as the logistic, GEE and mixed
+    # models. Standardization is learned on development families only so the
+    # optimizer sees comparable numerical scales without test-data leakage.
     cols = list(FEATURES)
-    X = dev[cols].astype(float).values
+    scaler = StandardScaler().fit(dev[cols].astype(float))
+    X = scaler.transform(dev[cols].astype(float))
     time = dev.event_time_y.values.astype(float)
     status = dev.event_observed.values.astype(int)
     families = dev.family_id.values
@@ -50,13 +51,17 @@ def fit_shared_gamma_frailty(dev, test):
     beta = opt.x[: len(cols)]
     lam = math.exp(opt.x[-2])
     theta = math.exp(opt.x[-1])
-    eta_t = test[cols].astype(float).values @ beta
+    X_test = scaler.transform(test[cols].astype(float))
+    eta_t = X_test @ beta
     # Marginal survival for a new family after integrating over gamma frailty.
     surv10 = (1 + theta * lam * HORIZON * np.exp(np.clip(eta_t, -20, 20))) ** (-1 / theta)
     p10 = 1 - surv10
     return {
         "columns": cols,
         "coef": {c: float(v) for c, v in zip(cols, beta)},
+        "coefficient_scale": "standardized development covariates",
+        "standardization_mean": {c: float(v) for c, v in zip(cols, scaler.mean_)},
+        "standardization_scale": {c: float(v) for c, v in zip(cols, scaler.scale_)},
         "baseline_hazard": float(lam),
         "frailty_theta": float(theta),
         "converged": bool(opt.success),
