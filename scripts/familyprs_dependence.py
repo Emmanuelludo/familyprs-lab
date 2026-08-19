@@ -18,7 +18,10 @@ def gee_oof_and_final(dev, test):
     return mod, fit, None, p, cv_summary, None
 
 def fit_shared_gamma_frailty(dev, test):
-    cols = PGS_FEATURES + ["sex_female", "antibiotics_12m", "affected_sibling", "multi_fdr_2plus", "multi_fdr_3plus"]
+    # Use the same observed predictor block as the logistic, GEE and mixed models
+    # so model comparisons reflect the survival/dependence formulation rather than
+    # differences in covariate availability.
+    cols = list(FEATURES)
     X = dev[cols].astype(float).values
     time = dev.event_time_y.values.astype(float)
     status = dev.event_observed.values.astype(int)
